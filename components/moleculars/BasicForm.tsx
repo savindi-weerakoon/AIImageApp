@@ -10,6 +10,8 @@ import { BasicFormProps } from '@/types/component.type';
 export default (props: BasicFormProps) => {
     const {
         fields,
+        disabled,
+        loading,
         onSubmit,
         submitButtonTitle,
         secondaryButtonTitle,
@@ -23,6 +25,7 @@ export default (props: BasicFormProps) => {
         <BasicInput
           key={field.name}
           value={field.value}
+          disabled={disabled}
           onChangeText={field.setValue}
           placeholder={field.placeholder}
           secureTextEntry={Boolean(field.secureTextEntry)}
@@ -37,12 +40,13 @@ export default (props: BasicFormProps) => {
       style={styles.form}
     >
       {renderFields()}
-      <BasicButton title={submitButtonTitle} onPress={onSubmit} />
+      <BasicButton title={submitButtonTitle} onPress={onSubmit} disabled={disabled} loading={loading} />
       {secondaryButtonTitle && onSecondaryButtonPress && (
         <BasicButton
           title={secondaryButtonTitle}
           outlined
           onPress={onSecondaryButtonPress}
+          disabled={disabled}
         />
       )}
     </KeyboardAvoidingView>

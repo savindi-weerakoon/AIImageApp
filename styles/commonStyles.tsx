@@ -47,6 +47,9 @@ export default () => {
         buttonText: {
             color: Colors[colorScheme ?? 'light'].text,
             textTransform: 'uppercase'
+        },
+        icon: {
+            color: Colors[colorScheme ?? 'light'].text,
         }
     })
     return styles

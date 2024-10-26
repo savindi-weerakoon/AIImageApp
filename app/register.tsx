@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useAuth } from './../hooks/useAuth'
 import { useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./../scripts/firebase"
 import commonStyles from "@/styles/commonStyles"
 import BasicForm from "@/components/moleculars/BasicForm";
@@ -14,6 +14,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [confirmPassword, setConfirmPassword] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const handleSignIn = () => {
     if (email.trim() == '' || password.trim() == '') {
@@ -21,14 +22,14 @@ export default function RegisterScreen() {
     } else if (password !== confirmPassword) {
       alert('Password and confirmation password does not match')
     } else {
-      console.log(auth)
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential: any) => {
-          console.log(userCredential)
-          signIn(userCredential.user);
-          router.replace('/'); // Navigate to home on success
+      setIsLoading(true)
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          setIsLoading(false)
+          router.replace('/login')
         })
         .catch((error) => {
+          setIsLoading(false)
           console.error('Error signing in:', error);
         })
     }
@@ -43,6 +44,8 @@ export default function RegisterScreen() {
             { name: 'password', placeholder: 'ENTER PASSWORD', value: password, setValue: setPassword, secureTextEntry: true },
             { name: 'confirmPassword', placeholder: 'CONFIRM PASSWORD', value: confirmPassword, setValue: setConfirmPassword, secureTextEntry: true },
           ]}
+          disabled={isLoading}
+          loading={isLoading}
           onSubmit={handleSignIn}
           submitButtonTitle="Register"
           secondaryButtonTitle="Login"

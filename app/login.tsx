@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, SafeAreaView, View, TextInput, Platform  } from "react-native";
+import { SafeAreaView  } from "react-native";
 import { router } from 'expo-router';
 import { useAuth } from './../hooks/useAuth'
 import { useState } from "react";
@@ -13,19 +13,23 @@ export default function LoginScreen() {
   const styles = commonStyles()
   const [email, setEmail] = useState<string>('')
   const [password, setPassword] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const handleSignIn = () => {
     if (email.trim() == '' || password.trim() == '') {
       alert('Enter email and password first')
       return
     }
+    setIsLoading(true)
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential: any) => {
-        signIn(userCredential.user);
-        router.replace('/'); // Navigate to home on success
+        setIsLoading(false)
+        signIn(userCredential.user)
+        router.replace('/')
       })
       .catch((error) => {
-        console.error('Error signing in:', error);
+        setIsLoading(false)
+        console.error('Error signing in:', error)
       });
   };
 
@@ -38,6 +42,8 @@ export default function LoginScreen() {
             { name: 'password', placeholder: 'ENTER PASSWORD', value: password, setValue: setPassword, secureTextEntry: true },
           ]}
           onSubmit={handleSignIn}
+          disabled={isLoading}
+          loading={isLoading}
           submitButtonTitle="Login"
           secondaryButtonTitle="Register"
           onSecondaryButtonPress={() => router.push('/register')}

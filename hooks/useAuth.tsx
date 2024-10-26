@@ -36,9 +36,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   // Monitor user state and update authentication status
   useEffect(() => {
-    setIsAuthenticated(!!user); // Set to true if user exists
-    if (!isAuthenticated) {
-      // router.navigate('/login')
+    const checkAuth = Boolean(user)
+    setIsAuthenticated(checkAuth)
+    if (checkAuth) {
+      router.navigate('/')
+    } else {
+      router.navigate('/login')
     }
   }, [user]);
 
@@ -59,7 +62,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const signOut = useCallback(async () => {
     try {
       await deleteValue();
-      setIsAuthenticated(false);
+      setIsAuthenticated(false)
+      router.navigate('/login')
     } catch (error) {
       console.error('Error during sign-out:', error);
     }
