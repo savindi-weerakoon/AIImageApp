@@ -1,4 +1,4 @@
-import { View, StyleSheet, Button, TextInput, KeyboardAvoidingView, Platform, FlatList, Pressable } from 'react-native';
+import { View, StyleSheet, Button, TextInput, KeyboardAvoidingView, Platform, FlatList, Pressable, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import React, { useState } from 'react';
@@ -10,6 +10,9 @@ import { useAssets } from 'expo-asset';
 
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
+
+import Ionicons from '@expo/vector-icons/Ionicons'
+import commonStyles from '@/styles/commonStyles';
 
 type ImageData = {
   uri: string;
@@ -47,6 +50,7 @@ const captureAndPickImage = async (id: string) => {
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
+  const cStyles = commonStyles()
   const [imageUri, setImageUri] = useState<ImageData | null>(null)
   const [value, onChangeText] = useState('')
   const [generatedImage, setGeneratedImage] = useState(null)
@@ -182,10 +186,12 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={cStyles.page}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
           {!generatedImage && !imageUri && <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-            <Button title="Capture Image" onPress={openImagePicker}></Button>
+            <TouchableOpacity onPress={openImagePicker}>
+              <Ionicons name="camera" size={64} color={Colors[colorScheme ?? 'light'].tint} />
+            </TouchableOpacity>
           </View>}
           {!generatedImage && imageUri && <View style={styles.cameraContainer}>
             <Image
