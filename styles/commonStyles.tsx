@@ -80,6 +80,17 @@ export default () => {
             alignItems: 'center',
             width: '100%',
             height: '100%'
+        },
+        statusBarContainer: {
+            width: '100%',
+            paddingVertical: 8,
+            alignItems: 'center',
+            justifyContent: 'center'
+        },
+        statusText: {
+            color: '#fff',
+            fontSize: 10,
+            fontWeight: 'bold',
         }
     })
     return styles

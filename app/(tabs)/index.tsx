@@ -1,7 +1,7 @@
 import { ScrollView, View, StyleSheet, Text, TextInput, KeyboardAvoidingView, Platform, FlatList, Pressable, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -11,6 +11,7 @@ import { useAssets } from 'expo-asset';
 import Ionicons from '@expo/vector-icons/Ionicons'
 import commonStyles from '@/styles/commonStyles';
 import BasicButton from '@/components/atoms/BasicButton';
+import OnlineIndicator from '@/components/moleculars/OnlineIndicator'
 
 import { useImageGenerator } from '@/hooks/useImageGenerator'
 import { useImageUpload } from '@/hooks/useImageUpload'
@@ -24,6 +25,7 @@ import { Mask } from '@/types/composables.type';
 
 import ImageGallery from '@/components/moleculars/ImageGallery'
 import { BasicImageProps } from '@/types/component.type';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme()
@@ -56,6 +58,7 @@ export default function HomeScreen() {
   const { images, isLoading, fetchImages } = useFetchImages()
 
   const [refreshing, setRefreshing] = useState(false)
+  const isOnline = useOnlineStatus()
 
   const onRefresh = useCallback(() => {
     fetchImages()
@@ -70,15 +73,24 @@ export default function HomeScreen() {
     setTimeout(() => {
       cancelPublish()
       fetchImages()
-    }, 2000)
-  };
+    }, 5000)
+  }
+
+  useEffect(() => {
+    if (isOnline) {
+      fetchImages()
+    }
+  }, [isOnline])
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={cStyles.page}>
-        <ScrollView refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }>
+        <OnlineIndicator />
+        <ScrollView
+          contentContainerStyle={{ flex: 1, justifyContent: 'center' }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
             {!generatedImage && !imageUri && <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center'}}>
               { isLoading ?
@@ -95,7 +107,7 @@ export default function HomeScreen() {
             </View>}
             {!generatedImage && imageUri && <View style={styles.cameraContainer}>
               <Image
-                style={cStyles.imageContain}
+                style={{...cStyles.imageContain, height: 300}}
                 source={imageUri}
                 placeholder={imageUri}
                 contentFit="contain"
@@ -141,10 +153,10 @@ export default function HomeScreen() {
               </View>
             </View>
             }
-            {generatedImage && <View style={styles.generatedImageContainer}>
+            {generatedImage && <View style={{ ...styles.generatedImageContainer,  flex: 1, alignContent: 'center'}}>
               <View style={{ flex: 1 }}>
                 <Image
-                  style={cStyles.imageContain}
+                  style={{ ...cStyles.imageContain, height: 300 }}
                   source={generatedImage}
                   placeholder={generatedImage}
                   contentFit="contain"

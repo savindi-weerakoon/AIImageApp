@@ -11,7 +11,7 @@ type ImageData = {
 };
 
 type UseImageGeneratorHook = {
-  imageUri: ImageData | null;
+  imageUri: string;
   generatedImage: string;
   generating: boolean;
   openImagePicker: () => Promise<void>;
@@ -21,12 +21,12 @@ type UseImageGeneratorHook = {
 };
 
 export function useImageGenerator(): UseImageGeneratorHook {
-  const [imageUri, setImageUri] = useState<ImageData | null>(null);
+  const [imageUri, setImageUri] = useState<string>('');
   const [generatedImage, setGeneratedImage] = useState<string>('');
   const [generating, setGenerating] = useState<boolean>(false);
 
   const cancelGenerate = useCallback(() => {
-    setImageUri(null);
+    setImageUri('');
   }, []);
 
   const cancelPublish = useCallback(() => {
@@ -47,7 +47,7 @@ export function useImageGenerator(): UseImageGeneratorHook {
         const formData = new FormData();
         if (imageUri) {
           formData.append('image', {
-            uri: imageUri.uri,
+            uri: imageUri,
             name: `${Date.now()}.${SaveFormat.PNG}`,
             type: `image/${SaveFormat.PNG}`,
           } as any);
@@ -96,7 +96,7 @@ export function useImageGenerator(): UseImageGeneratorHook {
       [{ resize: { height: 445, width: 450 } }],
       { compress: 1, format: SaveFormat.PNG }
     );
-    setImageUri(manipResult as ImageData);
+    setImageUri((manipResult as ImageData).uri as string);
   }, []);
 
   return {
