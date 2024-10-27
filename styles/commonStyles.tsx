@@ -60,6 +60,26 @@ export default () => {
         imageContain: {
             flex: 1,
             borderRadius: 8
+        },
+        progressBar: {
+            position: 'absolute',
+            top: 0,
+            width: '100%',
+            height: 16,
+            zIndex: 1,
+            backgroundColor: Colors[colorScheme ?? 'light'].success,
+            alignItems: 'center',
+            justifyContent: 'center'
+        },
+        progressBarText: {
+            color: Colors[colorScheme ?? 'light'].text,
+            fontSize: 10
+        },
+        imageContainer: {
+            marginBottom: 16,
+            alignItems: 'center',
+            width: '100%',
+            height: '100%'
         }
     })
     return styles

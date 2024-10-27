@@ -1,21 +1,7 @@
 import { useEffect, useState, useCallback, createContext, useContext, type PropsWithChildren } from 'react';
 import { useAsyncStorage } from './useAsyncStorage';
 import { router } from 'expo-router';
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  token: string;
-};
-
-type AuthContextType = {
-  user: User | null;
-  signIn: (userData: User) => Promise<void>;
-  signOut: () => Promise<void>;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-};
+import { AuthContextType, User } from '@/types/composables.type';
 
 // Create the AuthContext
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +15,6 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-// AuthProvider to wrap around your app's component tree
 export function AuthProvider({ children }: PropsWithChildren) {
   const { storedValue: user, saveValue, deleteValue, loading } = useAsyncStorage<User>('auth_user');
   const [isAuthenticated, setIsAuthenticated] = useState(false);

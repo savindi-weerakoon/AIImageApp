@@ -45,7 +45,7 @@ export function useAsyncStorage<T>(key: string) {
   const deleteValue = useCallback(async () => {
     try {
       await AsyncStorage.removeItem(key);
-      setStoredValue(null); // Clear the state
+      setStoredValue(null);
     } catch (error) {
       console.error(`Error deleting item with key "${key}":`, error);
     }

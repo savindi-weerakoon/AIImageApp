@@ -31,3 +31,11 @@ export type BasicFormProps = {
     secondaryButtonTitle?: string;
     onSecondaryButtonPress?: () => void;
   };
+
+export type ProgressBarProps = {
+  value: number
+}
+
+export type BasicImageProps = {
+  source: string;
+}
