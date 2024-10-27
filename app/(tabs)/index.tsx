@@ -1,7 +1,7 @@
-import { View, StyleSheet, Text, TextInput, KeyboardAvoidingView, Platform, FlatList, Pressable, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ScrollView, View, StyleSheet, Text, TextInput, KeyboardAvoidingView, Platform, FlatList, Pressable, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -55,6 +55,16 @@ export default function HomeScreen() {
   const { saveImageDetails, isSaving } = useSaveImageDetails()
   const { images, isLoading, fetchImages } = useFetchImages()
 
+  const [refreshing, setRefreshing] = useState(false)
+
+  const onRefresh = useCallback(() => {
+    fetchImages()
+    setRefreshing(true)
+    setTimeout(() => {
+      setRefreshing(false)
+    }, 2000)
+  }, [])
+
   const uploadImageToFirebase = async () => {
     uploadImage(generatedImage, saveImageDetails)
     setTimeout(() => {
@@ -66,92 +76,96 @@ export default function HomeScreen() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={cStyles.page}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-          {!generatedImage && !imageUri && <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-            { isLoading ?
-              <View style={{ flex: 1/8, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator /></View> :
-                images.length > 0 ?
-                  <View style={{ flex: 7/8 }}>
-                    <ImageGallery images={images as unknown as BasicImageProps[]} />
-                  </View> :
-                <Text style={{ color: cStyles.white.color, fontSize: 14, paddingVertical: 20 }}>Generate your first image</Text>
-            }
-            <TouchableOpacity style={{ flex: 1/8 }} onPress={openImagePicker}>
-              <Ionicons name="camera" size={48} color={Colors[colorScheme ?? 'light'].tint} />
-            </TouchableOpacity>
-          </View>}
-          {!generatedImage && imageUri && <View style={styles.cameraContainer}>
-            <Image
-              style={cStyles.imageContain}
-              source={imageUri}
-              placeholder={imageUri}
-              contentFit="contain"
-              transition={500}
-            />
-            <FlatList
-              horizontal={true}
-              data={masks}
-              style={{ flexGrow: 0 }}
-              renderItem={({item, index}) => {
-                const maskObj = {
-                  uri: assets?.[index].localUri || '',
-                  name: assets?.[index].name || '',
-                  type: `image/${SaveFormat.PNG}`
-                }
-                return <View style={{ width: 100, height: 100, backgroundColor: mask?.name === assets?.[index].name ? 'red' : 'transparent' }}>
-                  <Pressable onPress={() => setMask(maskObj as Mask)}>
-                    <Image style={{ width: '100%', height: '100%' }} contentFit="cover" source={assets?.[index] as unknown as string} />
-                  </Pressable>
-                </View>
-              }}
-              keyExtractor={item => item.id}
-            />
-            <TextInput
-              aria-disabled={generating}
-              autoFocus
-              editable
-              multiline
-              placeholder="Enter your prompt here..."
-              numberOfLines={2}
-              maxLength={500}
-              onChangeText={text => onChangeText(text)}
-              value={prompt}
-              style={{ flex: 1/3, color: Colors[colorScheme ?? 'light'].tint, fontSize: 20, padding: 8 }}
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between'}}>
-              <View style={{ paddingEnd: 8 }}>
-                <BasicButton title={"Cancel"} outlined onPress={cancelGenerate} disabled={generating} />
-              </View>
-              <View style={{ paddingStart: 8 }}>
-                <BasicButton title={generating ? "Generating..." : "Generate"} onPress={() => generateImage(prompt, mask)} disabled={generating} loading={generating} />
-              </View>
-            </View>
-          </View>
-          }
-          {generatedImage && <View style={styles.generatedImageContainer}>
-            <View style={{ flex: 1 }}>
+        <ScrollView refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+            {!generatedImage && !imageUri && <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+              { isLoading ?
+                <View style={{ flex: 1/8, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator /></View> :
+                  images.length > 0 ?
+                    <View style={{ flex: 7/8 }}>
+                      <ImageGallery images={images as unknown as BasicImageProps[]} />
+                    </View> :
+                  <Text style={{ color: cStyles.white.color, fontSize: 14, paddingVertical: 20 }}>Generate your first image</Text>
+              }
+              <TouchableOpacity style={{ flex: 1/8 }} onPress={openImagePicker}>
+                <Ionicons name="camera" size={48} color={Colors[colorScheme ?? 'light'].tint} />
+              </TouchableOpacity>
+            </View>}
+            {!generatedImage && imageUri && <View style={styles.cameraContainer}>
               <Image
                 style={cStyles.imageContain}
-                source={generatedImage}
-                placeholder={generatedImage}
+                source={imageUri}
+                placeholder={imageUri}
                 contentFit="contain"
                 transition={500}
               />
-              <TouchableOpacity onPress={() => downloadImage(generatedImage)} style={{ position: 'absolute', bottom: 24, right: 0 }}>
-                { isDownloading ? <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%'}}>
-                  <Text style={{color: Colors[colorScheme ?? 'light'].tint}}>Image is being saved...</Text>
-                  <ActivityIndicator />
-                </View> : <Ionicons name="download" size={32} color={Colors[colorScheme ?? 'light'].tint} />}
-              </TouchableOpacity>
+              <FlatList
+                horizontal={true}
+                data={masks}
+                style={{ flexGrow: 0 }}
+                renderItem={({item, index}) => {
+                  const maskObj = {
+                    uri: assets?.[index].localUri || '',
+                    name: assets?.[index].name || '',
+                    type: `image/${SaveFormat.PNG}`
+                  }
+                  return <View style={{ width: 100, height: 100, backgroundColor: mask?.name === assets?.[index].name ? 'red' : 'transparent' }}>
+                    <Pressable onPress={() => setMask(maskObj as Mask)}>
+                      <Image style={{ width: '100%', height: '100%' }} contentFit="cover" source={assets?.[index] as unknown as string} />
+                    </Pressable>
+                  </View>
+                }}
+                keyExtractor={item => item.id}
+              />
+              <TextInput
+                aria-disabled={generating}
+                autoFocus
+                editable
+                multiline
+                placeholder="Enter your prompt here..."
+                numberOfLines={2}
+                maxLength={500}
+                onChangeText={text => onChangeText(text)}
+                value={prompt}
+                style={{ flex: 1/3, color: Colors[colorScheme ?? 'light'].tint, fontSize: 20, padding: 8 }}
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between'}}>
+                <View style={{ paddingEnd: 8 }}>
+                  <BasicButton title={"Cancel"} outlined onPress={cancelGenerate} disabled={generating} />
+                </View>
+                <View style={{ paddingStart: 8 }}>
+                  <BasicButton title={generating ? "Generating..." : "Generate"} onPress={() => generateImage(prompt, mask)} disabled={generating} loading={generating} />
+                </View>
+              </View>
             </View>
-            <BasicButton title={generating ? "Regenerating..." : "Regenerate"} onPress={() => generateImage(prompt, mask)} disabled={generating || isDownloading} loading={generating} />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
-              <BasicButton title={"Cancel"} outlined onPress={cancelPublish} />
-              <BasicButton title={isUploading || isSaving ? "Publishing..." : "Publish"} onPress={uploadImageToFirebase} disabled={isDownloading || isUploading || isSaving} loading={isUploading || isSaving} />
-            </View>
-          </View>}
-          <ProgressBar value={progress} />
-        </KeyboardAvoidingView>
+            }
+            {generatedImage && <View style={styles.generatedImageContainer}>
+              <View style={{ flex: 1 }}>
+                <Image
+                  style={cStyles.imageContain}
+                  source={generatedImage}
+                  placeholder={generatedImage}
+                  contentFit="contain"
+                  transition={500}
+                />
+                <TouchableOpacity onPress={() => downloadImage(generatedImage)} style={{ position: 'absolute', bottom: 24, right: 0 }}>
+                  { isDownloading ? <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%'}}>
+                    <Text style={{color: Colors[colorScheme ?? 'light'].tint}}>Image is being saved...</Text>
+                    <ActivityIndicator />
+                  </View> : <Ionicons name="download" size={32} color={Colors[colorScheme ?? 'light'].tint} />}
+                </TouchableOpacity>
+              </View>
+              <BasicButton title={generating ? "Regenerating..." : "Regenerate"} onPress={() => generateImage(prompt, mask)} disabled={generating || isDownloading} loading={generating} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
+                <BasicButton title={"Cancel"} outlined onPress={cancelPublish} />
+                <BasicButton title={isUploading || isSaving ? "Publishing..." : "Publish"} onPress={uploadImageToFirebase} disabled={isDownloading || isUploading || isSaving} loading={isUploading || isSaving} />
+              </View>
+            </View>}
+            <ProgressBar value={progress} />
+          </KeyboardAvoidingView>
+        </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
   );

@@ -1,11 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore } from '@/scripts/firebase';
-import { UseFetchImagesHook } from '@/types/composables.type';
+import { useAsyncStorage } from './useAsyncStorage'; // Import the AsyncStorage hook
 
-export function useFetchImages(uid?: string): UseFetchImagesHook {
-  const [images, setImages] = useState<ImageData[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+type ImageData = {
+  id: string;
+  uid: string;
+  email: string;
+  imageUrl: string;
+  uploadedAt: string;
+  source: string;
+};
+
+export function useFetchImages(uid?: string) {
+  const { storedValue, saveValue, loading: storageLoading } = useAsyncStorage<ImageData[]>('cachedImages');
+  const [images, setImages] = useState<ImageData[]>(storedValue || []);
+  const [isLoading, setIsLoading] = useState<boolean>(!storedValue); // Only load if no cached images
   const [error, setError] = useState<string | null>(null);
 
   const fetchImages = useCallback(async () => {
@@ -22,29 +32,32 @@ export function useFetchImages(uid?: string): UseFetchImagesHook {
 
       const querySnapshot = await getDocs(q);
       const fetchedImages: ImageData[] = querySnapshot.docs.map((doc) => {
-        let data = doc.data()
-        data = {
-          ...data,
-          source: data.imageUrl
-        }
+        const data = doc.data();
         return {
           id: doc.id,
-          ...(data as Omit<ImageData, 'id'>),
-        }
+          uid: data.uid,
+          email: data.email,
+          imageUrl: data.imageUrl,
+          uploadedAt: data.uploadedAt,
+          source: data.imageUrl, // Set the source for rendering
+        };
       });
 
       setImages(fetchedImages);
+      await saveValue(fetchedImages); // Cache the fetched images
     } catch (err: any) {
       console.error('Error fetching images:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [uid, saveValue]);
 
   useEffect(() => {
-    fetchImages();
-  }, [fetchImages]);
+    if (!storedValue) {
+      fetchImages(); // Only fetch if no cached images available
+    }
+  }, [fetchImages, storedValue]);
 
-  return { images, isLoading, error, fetchImages } as any;
+  return { images, isLoading: isLoading || storageLoading, error, fetchImages };
 }
