@@ -57,10 +57,12 @@ export function useImageGenerator(): UseImageGeneratorHook {
         formData.append('n', '1');
         formData.append('size', '512x512');
 
+        const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_KEY
+
         const res = await fetch('https://api.openai.com/v1/images/edits', {
           method: 'POST',
           headers: {
-            Authorization: `Bearer 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`,
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
             'Content-Type': 'multipart/form-data',
           },
           body: formData,
@@ -82,7 +84,7 @@ export function useImageGenerator(): UseImageGeneratorHook {
       } finally {
         setGenerating(false);
       }
-    },
+    },  
     [imageUri]
   );
 
