@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore } from '@/scripts/firebase';
 import { UseFetchImagesHook } from '@/types/composables.type';
 

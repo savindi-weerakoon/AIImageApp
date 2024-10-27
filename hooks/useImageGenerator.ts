@@ -58,8 +58,9 @@ export function useImageGenerator(): UseImageGeneratorHook {
         formData.append('size', '512x512');
 
         const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_KEY
+        const OPENAI_URL = process.env.EXPO_PUBLIC_OPENAI_URL || ''
 
-        const res = await fetch('https://api.openai.com/v1/images/edits', {
+        const res = await fetch(OPENAI_URL, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${OPENAI_API_KEY}`,
