@@ -10,6 +10,9 @@ export default () => {
             paddingHorizontal: 16,
             backgroundColor: Colors[colorScheme ?? 'light'].background
         },
+        justifyCenter: {
+            justifyContent: 'center'
+        },
         form: {
             flex: 1,
             justifyContent: 'center'
@@ -22,6 +25,9 @@ export default () => {
             color: Colors[colorScheme ?? 'light'].text,
             marginBottom: 16,
             borderRadius: 8
+        },
+        white: {
+            color: Colors[colorScheme ?? 'light'].text
         },
         buttonFilled: {
             paddingHorizontal: 16,
@@ -50,6 +56,10 @@ export default () => {
         },
         icon: {
             color: Colors[colorScheme ?? 'light'].text,
+        },
+        imageContain: {
+            flex: 1,
+            borderRadius: 8
         }
     })
     return styles

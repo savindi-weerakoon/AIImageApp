@@ -1,4 +1,4 @@
-import { View, StyleSheet, Button, TextInput, KeyboardAvoidingView, Platform, FlatList, Pressable, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TextInput, KeyboardAvoidingView, Platform, FlatList, Pressable, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import React, { useState } from 'react';
@@ -13,6 +13,9 @@ import * as MediaLibrary from "expo-media-library";
 
 import Ionicons from '@expo/vector-icons/Ionicons'
 import commonStyles from '@/styles/commonStyles';
+import BasicButton from '@/components/atoms/BasicButton';
+
+import { useImageDownloader } from '@/hooks/useDownload'
 
 type ImageData = {
   uri: string;
@@ -32,20 +35,38 @@ const setImageData = async (image: ImagePicker.ImagePickerResult, id: string) =>
 }
 
 const captureAndPickImage = async (id: string) => {
-  await ImagePicker.requestMediaLibraryPermissionsAsync()
-  await MediaLibrary.requestPermissionsAsync()
-  const result = await ImagePicker.launchCameraAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 0
-  })
-  if (!result.canceled) {
-    const data = await setImageData(result, id)
-    if (data)
-      return data
+  try {
+    // Request media library permission and handle the status
+    const mediaLibraryPermission = await MediaLibrary.requestPermissionsAsync()
+    if (mediaLibraryPermission.status !== 'granted') {
+      alert('Media library access is required.')
+      return null
+    }
+
+    // Request camera permission and handle the status
+    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync()
+    if (cameraPermission.status !== 'granted') {
+      alert('Camera access is required.')
+      return null
+    }
+
+    // Launch the camera and get the result
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0,
+    })
+
+    if (!result.canceled) {
+      const data = await setImageData(result, id)
+      if (data) return data
+    }
+    return null
+  } catch (error) {
+    alert('Something went wrong. Please try again.')
+    return null
   }
-  return null
 }
 
 export default function HomeScreen() {
@@ -56,7 +77,7 @@ export default function HomeScreen() {
   const [generatedImage, setGeneratedImage] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [mask, setMask] = useState<Mask | null>(null)
-  const [assets, error] = useAssets([
+  const [assets] = useAssets([
     require('@/assets/images/masks/mask-glass-1.png'),
     require('@/assets/images/masks/mask-glass-2.png'),
     require('@/assets/images/masks/mask-glass-3.png'),
@@ -65,6 +86,7 @@ export default function HomeScreen() {
     require('@/assets/images/masks/mask-batman-1.png'),
     require('@/assets/images/masks/mask-spacehelmet-1.png'),
   ])
+  const { downloadImage, isDownloading } = useImageDownloader();
 
   const cancelGenerate = () => {
     setImageUri(null)
@@ -195,10 +217,11 @@ export default function HomeScreen() {
           </View>}
           {!generatedImage && imageUri && <View style={styles.cameraContainer}>
             <Image
-              style={styles.image}
+              style={cStyles.imageContain}
               source={imageUri}
               placeholder={imageUri}
               contentFit="contain"
+              transition={500}
             />
             <FlatList
               horizontal={true}
@@ -231,21 +254,35 @@ export default function HomeScreen() {
               style={{ flex: 1/3, color: Colors[colorScheme ?? 'light'].tint, fontSize: 20, padding: 8 }}
             />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between'}}>
-              <Button title="Cancel" onPress={cancelGenerate} disabled={generating}></Button>
-              <Button title={generating ? "Generating..." : "Generate"} onPress={generateImage} disabled={generating}></Button>
+              <View style={{ paddingEnd: 8 }}>
+                <BasicButton title={"Cancel"} outlined onPress={cancelGenerate} disabled={generating} />
+              </View>
+              <View style={{ paddingStart: 8 }}>
+                <BasicButton title={generating ? "Generating..." : "Generate"} onPress={generateImage} disabled={generating} loading={generating} />
+              </View>
             </View>
           </View>
           }
           {generatedImage && <View style={styles.generatedImageContainer}>
-            <Image
-              style={styles.image}
-              source={generatedImage}
-              placeholder={generatedImage}
-              contentFit="contain"
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between'}}>
-              <Button title="Cancel" onPress={cancelPublish}></Button>
-              <Button title="Publish" onPress={() => {}}></Button>
+            <View style={{ flex: 1 }}>
+              <Image
+                style={cStyles.imageContain}
+                source={generatedImage}
+                placeholder={generatedImage}
+                contentFit="contain"
+                transition={500}
+              />
+              <TouchableOpacity onPress={() => downloadImage(generatedImage)} style={{ position: 'absolute', bottom: 24, right: 0 }}>
+                { isDownloading ? <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%'}}>
+                  <Text style={{color: Colors[colorScheme ?? 'light'].tint}}>Image is being saved...</Text>
+                  <ActivityIndicator />
+                </View> : <Ionicons name="download" size={32} color={Colors[colorScheme ?? 'light'].tint} />}
+              </TouchableOpacity>
+            </View>
+            <BasicButton title={generating ? "Regenerating..." : "Regenerate"} onPress={generateImage} disabled={generating || isDownloading} loading={generating} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
+              <BasicButton title={"Cancel"} outlined onPress={cancelPublish} />
+              <BasicButton title={"Publish"} onPress={generateImage} disabled={isDownloading} />
             </View>
           </View>}
         </KeyboardAvoidingView>
@@ -266,12 +303,6 @@ const styles = StyleSheet.create({
   cameraContainer: {
     flex: 1,
     paddingTop: 24
-  },
-  image: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: 'white',
-    zIndex: 1
   },
   generatedImageContainer: {
     flex: 1

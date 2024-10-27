@@ -10,8 +10,9 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      sceneContainerStyle={{ backgroundColor: Colors[colorScheme ?? 'light'].primary }}
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].text,
         headerShown: false,
       }}>
       <Tabs.Screen

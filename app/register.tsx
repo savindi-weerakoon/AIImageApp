@@ -30,14 +30,14 @@ export default function RegisterScreen() {
         })
         .catch((error) => {
           setIsLoading(false)
-          console.error('Error signing in:', error);
+          alert(error)
         })
     }
   };
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.page}>
+    <SafeAreaProvider style={{ ...styles.page, ...styles.justifyCenter }}>
+      <SafeAreaView>
         <BasicForm
           fields={[
             { name: 'email', placeholder: 'ENTER EMAIL', value: email, setValue: setEmail },
